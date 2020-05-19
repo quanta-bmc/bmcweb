@@ -245,6 +245,10 @@ class Chassis : public Node
     void doGet(crow::Response &res, const crow::Request &req,
                const std::vector<std::string> &params) override
     {
+        res.jsonValue["Actions"]["#Chassis.Reset"] = {
+            {"target", "/redfish/v1/Chessis/chessis/Actions/Chassis.Reset"},
+            {"ResetType@Redfish.AllowableValues", {"PowerCycle"}}};
+
         const std::array<const char *, 2> interfaces = {
             "xyz.openbmc_project.Inventory.Item.Board",
             "xyz.openbmc_project.Inventory.Item.Chassis"};
@@ -514,6 +518,75 @@ class Chassis : public Node
             "/xyz/openbmc_project/object_mapper",
             "xyz.openbmc_project.ObjectMapper", "GetSubTree",
             "/xyz/openbmc_project/inventory", 0, interfaces);
+    }
+};
+
+/**
+ * ChassisActionsReset class supports handle POST method for Reset action.
+ * The class retrieves and sends data directly to D-Bus.
+ */
+class ChassisActionsReset : public Node
+{
+  public:
+    ChassisActionsReset(CrowApp &app) :
+        Node(app, "/redfish/v1/Chassis/<str>/Actions/Chassis.Reset/",
+             std::string())
+    {
+        entityPrivileges = {
+            {boost::beast::http::verb::post, {{"ConfigureComponents"}}}};
+    }
+
+  private:
+    /**
+     * Function handles POST method request.
+     * Analyzes POST body message before sends Reset request data to D-Bus.
+     */
+    void doPost(crow::Response &res, const crow::Request &req,
+                const std::vector<std::string> &params) override
+    {
+        auto asyncResp = std::make_shared<AsyncResp>(res);
+
+        std::string resetType;
+        if (!json_util::readJson(req, res, "ResetType", resetType))
+        {
+            return;
+        }
+
+        // Get the command and host vs. chassis
+        std::string command;
+        if (resetType == "PowerCycle")
+        {
+            command = "xyz.openbmc_project.State.Chassis.Transition.PowerCycle";
+        }
+        else
+        {
+            messages::actionParameterUnknown(res, "Reset", resetType);
+            return;
+        }
+
+        crow::connections::systemBus->async_method_call(
+            [asyncResp, resetType](const boost::system::error_code ec) {
+                if (ec)
+                {
+                    BMCWEB_LOG_ERROR << "D-Bus responses error: " << ec;
+                    if (ec.value() == boost::asio::error::invalid_argument)
+                    {
+                        messages::actionParameterNotSupported(
+                            asyncResp->res, resetType, "Reset");
+                    }
+                    else
+                    {
+                        messages::internalError(asyncResp->res);
+                    }
+                    return;
+                }
+                messages::success(asyncResp->res);
+            },
+            "xyz.openbmc_project.State.Chassis",
+            "/xyz/openbmc_project/state/chassis0",
+            "org.freedesktop.DBus.Properties", "Set",
+            "xyz.openbmc_project.State.Chassis", "RequestedPowerTransition",
+            std::variant<std::string>{command});
     }
 };
 } // namespace redfish
