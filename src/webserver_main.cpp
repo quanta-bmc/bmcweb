@@ -6,9 +6,10 @@
 #include <dbus_singleton.hpp>
 #include <image_upload.hpp>
 #include <kvm_websocket.hpp>
-#include <memory>
 #include <obmc_console.hpp>
 #include <openbmc_dbus_rest.hpp>
+
+#include <memory>
 #ifdef BMCWEB_ENABLE_IBM_MANAGEMENT_CONSOLE
 #include <ibm/management_console_rest.hpp>
 #endif
@@ -20,11 +21,12 @@
 #include <sdbusplus/server.hpp>
 #include <security_headers_middleware.hpp>
 #include <ssl_key_handler.hpp>
-#include <string>
 #include <token_authorization_middleware.hpp>
 #include <vm_websocket.hpp>
 #include <webassets.hpp>
 #include <webserver_common.hpp>
+
+#include <string>
 
 #ifdef BMCWEB_ENABLE_VM_NBDPROXY
 #include <nbd_proxy.hpp>
@@ -115,15 +117,6 @@ int main(int argc, char** argv)
 #endif
 
     redfish::RedfishService redfish(app);
-
-#ifndef BMCWEB_ENABLE_REDFISH_DBUS_LOG_ENTRIES
-    int rc = redfish::EventServiceManager::startEventLogMonitor(*io);
-    if (rc)
-    {
-        BMCWEB_LOG_ERROR << "Redfish event handler setup failed...";
-        return rc;
-    }
-#endif
 
     app.run();
     io->run();

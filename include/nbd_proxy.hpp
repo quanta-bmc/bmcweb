@@ -22,10 +22,10 @@
 #include <boost/beast/core/multi_buffer.hpp>
 #include <boost/container/flat_map.hpp>
 #include <dbus_utility.hpp>
-#include <experimental/filesystem>
 #include <privileges.hpp>
-#include <variant>
 #include <webserver_common.hpp>
+
+#include <variant>
 
 namespace crow
 {
@@ -47,8 +47,7 @@ struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
         endpointId(endpointIdIn), path(pathIn),
         acceptor(connIn.get_io_context(), stream_protocol::endpoint(socketId)),
         connection(connIn)
-    {
-    }
+    {}
 
     ~NbdProxyServer()
     {

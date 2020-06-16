@@ -20,6 +20,7 @@
 #include <error_messages.hpp>
 #include <openbmc_dbus_rest.hpp>
 #include <utils/json_utils.hpp>
+
 #include <variant>
 
 namespace redfish
@@ -132,14 +133,14 @@ void userErrorMessageHandler(const sd_bus_error* e,
                "xyz.openbmc_project.User.Common.Error.UserNameExists") == 0)
     {
         messages::resourceAlreadyExists(asyncResp->res,
-                                        "#ManagerAccount.v1_3_0.ManagerAccount",
+                                        "#ManagerAccount.v1_4_0.ManagerAccount",
                                         "UserName", newUser);
     }
     else if (strcmp(errorMessage, "xyz.openbmc_project.User.Common.Error."
                                   "UserNameDoesNotExist") == 0)
     {
         messages::resourceNotFound(
-            asyncResp->res, "#ManagerAccount.v1_3_0.ManagerAccount", username);
+            asyncResp->res, "#ManagerAccount.v1_4_0.ManagerAccount", username);
     }
     else if (strcmp(errorMessage,
                     "xyz.openbmc_project.Common.Error.InvalidArgument") == 0)
@@ -1575,10 +1576,11 @@ class ManagerAccount : public Node
                 }
 
                 asyncResp->res.jsonValue = {
-                    {"@odata.type", "#ManagerAccount.v1_3_0.ManagerAccount"},
+                    {"@odata.type", "#ManagerAccount.v1_4_0.ManagerAccount"},
                     {"Name", "User Account"},
                     {"Description", "User Account"},
-                    {"Password", nullptr}};
+                    {"Password", nullptr},
+                    {"AccountTypes", {"Redfish"}}};
 
                 for (const auto& interface : userIt->second)
                 {
@@ -1772,7 +1774,7 @@ class ManagerAccount : public Node
                 if (!rc)
                 {
                     messages::resourceNotFound(
-                        asyncResp->res, "#ManagerAccount.v1_3_0.ManagerAccount",
+                        asyncResp->res, "#ManagerAccount.v1_4_0.ManagerAccount",
                         username);
                     return;
                 }
@@ -1785,7 +1787,7 @@ class ManagerAccount : public Node
                     {
                         messages::resourceNotFound(
                             asyncResp->res,
-                            "#ManagerAccount.v1_3_0.ManagerAccount", username);
+                            "#ManagerAccount.v1_4_0.ManagerAccount", username);
                     }
                     else if (retval == PAM_AUTHTOK_ERR)
                     {
@@ -1907,7 +1909,7 @@ class ManagerAccount : public Node
                 if (ec)
                 {
                     messages::resourceNotFound(
-                        asyncResp->res, "#ManagerAccount.v1_3_0.ManagerAccount",
+                        asyncResp->res, "#ManagerAccount.v1_4_0.ManagerAccount",
                         username);
                     return;
                 }
